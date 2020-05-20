@@ -17,9 +17,10 @@ icons_path = pathlib.Path.cwd()
 def create_folder(bookmark_folder: BookmarkFolder, destination: pathlib.Path):
     if destination.exists():
         number = 2
-        while destination.exists():
-            destination = destination.parent / (destination.name + ' (' + str(number) + ')')
+        while (destination.parent / (destination.name + ' (' + str(number) + ')')).exists():
             number += 1
+        destination = destination.parent / (destination.name + ' (' + str(number) + ')')
+    destination = destination.parent / shortcuts.slugify(destination.name)
     destination.mkdir(parents=True)
     meta = open(destination / '.meta', 'w')
     items = bookmark_folder.items
@@ -36,13 +37,17 @@ def create_folder(bookmark_folder: BookmarkFolder, destination: pathlib.Path):
             ico_path = icons_path / (str(uuid.uuid4()) + '.ico')
             ico.save(ico_path)
             ico_path = ico_path.resolve()
+            ico_path = ico_path.absolute()
 
         s = creator.shortcut_creator(shortcut)
-        attributes = parser.attribute_extractor(s[0])
+        attributes = parser.attribute_extractor(s[0][6:])
         attributes['NAME'] = shortcut.name
         if len(s) == 2:
             attributes['COMMENT'] = shortcut.comment
-        shortcut_path = destination / (str(shortcut.num) + '- ' + shortcut.name + '.url')
+        if shortcut.name:
+            shortcut_path = destination / (shortcuts.slugify(shortcut.name) + '.url')
+        else:
+            shortcut_path = destination / '_.url'
         shortcuts.create_shortcut(shortcut_path, ico_path, attributes)
 
     for child in bookmark_folder.children:
@@ -68,9 +73,9 @@ def get_folder(dir_path: pathlib.Path):
                 img = io.BytesIO()
                 icon.save(img, format='PNG')
                 icon.close()
-                attributes['ICON'] = 'data:image/png;base64,' + base64.b64encode(img.getvalue())
+                attributes['ICON'] = 'data:image/png;base64,' + base64.b64encode(img.getvalue()).decode("utf-8")
 
-            attributes = '<DT><A' + creator.attribute_printer(attributes + '>' + attributes['NAME'] + '</A>')
+            attributes = '<DT><A' + creator.attribute_printer(attributes) + '>' + attributes['NAME'] + '</A>'
             shortcut = parser.shortcut_tag_extractor(attributes)
             shortcut.comment = comment
             folder.items.append(shortcut)
@@ -88,20 +93,23 @@ def bookmark_to_dir(file_path: pathlib.Path, destination=None):
         f = NetscapeBookmarksFile(file)
         f.parse()
         bookmarks = f.bookmarks
-    if bookmarks is None:
+    if bookmarks == BookmarkFolder():
         raise Exception('No bookmarks found')
 
     global icons_path
     icons_path = destination / '.icons'
-    destination = destination / file_path.name
+    icons_path.mkdir(parents=True)
+    destination = destination / file_path.stem
 
     if destination.exists():
         number = 2
         while destination.exists():
             destination = destination.parent / (destination.name + ' (' + str(number) + ')')
             number += 1
+    destination.mkdir(parents=True)
 
     f.bookmarks = BookmarkFolder()
+    f.html = ''
     f.create_file()
     with open(destination / '.meta', 'w') as meta:
         meta.write(f.html)
@@ -111,7 +119,7 @@ def bookmark_to_dir(file_path: pathlib.Path, destination=None):
 
 def dir_to_bookmark(dir_path: pathlib.Path, file_destination: pathlib = None):
     if file_destination is None:
-        file_destination = dir_path.parent
+        file_destination = dir_path.parent / (dir_path.name + '.html')
     meta = dir_path.parent / '.meta'
     file = NetscapeBookmarksFile()
     if meta.exists():
@@ -130,10 +138,10 @@ def dir_to_bookmark(dir_path: pathlib.Path, file_destination: pathlib = None):
 def main():
     if len(sys.argv) == 1:
         print('''usage: 
-        bookmarks_to_dir <file> <dir_destination>
-        bookmarks_to_dir <dir> <file_destination>
-        destination is optional
-        ''')
+bookmarks_to_dir <file> <dir_destination>
+bookmarks_to_dir <dir> <file_destination>
+destination is optional
+''')
 
     if len(sys.argv) > 1:
         item = pathlib.Path(sys.argv[1])
