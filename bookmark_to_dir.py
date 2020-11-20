@@ -89,7 +89,7 @@ def bookmark_to_dir(file_path: pathlib.Path, destination=None):
     if destination is None:
         destination = file_path.parent
     bookmarks = None
-    with open(file_path) as file:
+    with open(file_path, 'r', encoding='utf-8') as file:
         f = NetscapeBookmarksFile(file)
         f.parse()
         bookmarks = f.bookmarks
@@ -111,7 +111,7 @@ def bookmark_to_dir(file_path: pathlib.Path, destination=None):
     f.bookmarks = BookmarkFolder()
     f.html = ''
     f.create_file()
-    with open(destination / '.meta', 'w') as meta:
+    with open(destination / '.meta', 'w', encoding='utf-8') as meta:
         meta.write(f.html)
     folder = destination / bookmarks.name
     create_folder(bookmarks, folder)
@@ -131,7 +131,7 @@ def dir_to_bookmark(dir_path: pathlib.Path, file_destination: pathlib = None):
             break
 
     file.create_file()
-    with open(file_destination, 'w') as bookmarks:
+    with open(file_destination, 'w', encoding='utf-8') as bookmarks:
         bookmarks.write(file.html)
 
 
