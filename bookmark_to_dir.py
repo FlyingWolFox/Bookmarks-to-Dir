@@ -137,11 +137,11 @@ def dir_to_bookmark(dir_path: pathlib.Path, file_destination: pathlib = None):
 
 def main():
     if len(sys.argv) == 1:
-        print('''usage: 
-bookmarks_to_dir <file> <dir_destination>
-bookmarks_to_dir <dir> <file_destination>
-destination is optional
-''')
+        print('usage:\n'
+              'bookmarks_to_dir <file> <dir_destination>\n'
+              'bookmarks_to_dir <dir> <file_destination>\n'
+              'destination is optional\n'
+              )
 
     if len(sys.argv) > 1:
         item = pathlib.Path(sys.argv[1])
