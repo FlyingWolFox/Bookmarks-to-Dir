@@ -38,7 +38,7 @@ def create_folder(bookmark_folder: BookmarkFolder, destination: pathlib.Path):
             if 'iVBORw0KGgo' in encoded[:12]:
                 data = base64.b64decode(encoded)
                 ico = Image.open(io.BytesIO(data))
-                ico_path = icons_path / (str(uuid.uuid4()) + '.ico')
+                ico_path = icons_path / (str(uuid.uuid4()) + shortcuts.icon_extension)
                 ico.save(ico_path)
                 ico_path = ico_path.resolve()
                 ico_path = ico_path.absolute()
@@ -54,7 +54,7 @@ def create_folder(bookmark_folder: BookmarkFolder, destination: pathlib.Path):
                 drawing = svg2rlg(str(svg_path))
 
                 ico = renderPM.drawToPIL(drawing)
-                ico_path = icons_path / (str(uuid.uuid4()) + '.ico')
+                ico_path = icons_path / (str(uuid.uuid4()) + shortcuts.icon_extension)
                 ico.save(ico_path)
                 ico_path = ico_path.resolve()
                 ico_path = ico_path.absolute()
@@ -73,7 +73,7 @@ def create_folder(bookmark_folder: BookmarkFolder, destination: pathlib.Path):
                 drawing = svg2rlg(str(svg_path))
 
                 ico = renderPM.drawToPIL(drawing)
-                ico_path = icons_path / (str(uuid.uuid4()) + '.ico')
+                ico_path = icons_path / (str(uuid.uuid4()) + shortcuts.icon_extension)
                 ico.save(ico_path)
                 ico_path = ico_path.resolve()
                 ico_path = ico_path.absolute()
@@ -87,9 +87,9 @@ def create_folder(bookmark_folder: BookmarkFolder, destination: pathlib.Path):
         if len(s) == 2:
             attributes['COMMENT'] = shortcut.comment
         if shortcut.name:
-            shortcut_path = destination / (shortcuts.slugify(shortcut.name) + '.url')
+            shortcut_path = destination / (shortcuts.slugify(shortcut.name) + shortcuts.extension)
         else:
-            shortcut_path = destination / '_.url'
+            shortcut_path = destination / ('_' + shortcuts.extension)
         shortcuts.create_shortcut(shortcut_path, ico_path, attributes)
 
     for child in bookmark_folder.children:
@@ -104,7 +104,7 @@ def get_folder(dir_path: pathlib.Path):
         tag = meta.open().readlines()[0]
         folder = parser.folder_handler(0, tag, [])
     for item in dir_path.iterdir():
-        if item.is_file() and item.suffix == '.url':
+        if item.is_file() and item.suffix == shortcuts.extension:
             attributes = shortcuts.get_shortcut(item)
             comment = attributes.get('COMMENT', '')
             attributes['NAME'] = attributes.get('Name', item.stem)

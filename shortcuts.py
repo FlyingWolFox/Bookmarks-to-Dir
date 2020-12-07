@@ -3,6 +3,8 @@ import pathlib
 
 structure = ''
 is_linux = platform.system() == 'Linux'
+extension = '.desktop' if is_linux else '.url'
+icon_extension = '.png' if is_linux else '.ico'
 
 
 def slugify(value):
@@ -32,9 +34,9 @@ def create_shortcut(shortcut_path: pathlib.Path, icon: str, attributes: dict):
     inside += '\n'
     if shortcut_path.exists():
         number = 2
-        while (shortcut_path.parent / (shortcut_path.stem + ' (' + str(number) + ').url')).exists():
+        while (shortcut_path.parent / (shortcut_path.stem + ' (' + str(number) + ')' + extension)).exists():
             number += 1
-        shortcut_path = shortcut_path.parent / (shortcut_path.stem + ' (' + str(number) + ').url')
+        shortcut_path = shortcut_path.parent / (shortcut_path.stem + ' (' + str(number) + ')' + extension)
     with open(shortcut_path, 'w') as shortcut:
         shortcut.write(inside)
 
@@ -53,7 +55,7 @@ def get_shortcut(shortcut_path: pathlib.Path):
     return attributes
 
 
-if is_linux == 'Linux':
+if is_linux:
     structure = '''[Desktop Entry]
 Encoding=UTF-8
 Name={name}
@@ -61,7 +63,6 @@ Type=Link
 URL={url}
 Icon={icon}
 '''
-    illegal = {'/': '\\', '\x00': ''}
 else:
     structure = '''[InternetShortcut]
 IconIndex=0
