@@ -8,6 +8,8 @@ from NetscapeBookmarksFileParser import *
 from NetscapeBookmarksFileParser import creator
 from NetscapeBookmarksFileParser import parser
 from PIL import Image
+from svglib.svglib import svg2rlg
+from reportlab.graphics import renderPM
 
 import shortcuts
 
@@ -32,13 +34,53 @@ def create_folder(bookmark_folder: BookmarkFolder, destination: pathlib.Path):
         ico_path = ''
         if shortcut.icon_base64 and 'data:image/png;base64' in shortcut.icon_base64[:25]:
             encoded = shortcut.icon_base64[shortcut.icon_base64.find(','):]
-            data = base64.b64decode(encoded)
-            ico = Image.open(io.BytesIO(data))
-            ico_path = icons_path / (str(uuid.uuid4()) + '.ico')
-            ico.save(ico_path)
-            ico_path = ico_path.resolve()
-            ico_path = ico_path.absolute()
+            # 'iVBORw0KGgo' is the PNG header encoded in base64
+            if 'iVBORw0KGgo' in encoded[:12]:
+                data = base64.b64decode(encoded)
+                ico = Image.open(io.BytesIO(data))
+                ico_path = icons_path / (str(uuid.uuid4()) + '.ico')
+                ico.save(ico_path)
+                ico_path = ico_path.resolve()
+                ico_path = ico_path.absolute()
+            # 'PHN2Zy' is equivalent to '<svg
+            # this is a svg favicon with the wrong MIME-type (see Issue #1)
+            elif 'PHN2Zy' in encoded[:7]:
+                data = base64.b64decode(encoded)
 
+                # svglib just accept svg files, so one is created on the icon dir
+                svg_path = icons_path / 'svg.svg'
+                with svg_path.open(mode='wb') as svg:
+                    svg.write(data)
+                drawing = svg2rlg(str(svg_path))
+
+                ico = renderPM.drawToPIL(drawing)
+                ico_path = icons_path / (str(uuid.uuid4()) + '.ico')
+                ico.save(ico_path)
+                ico_path = ico_path.resolve()
+                ico_path = ico_path.absolute()
+                svg_path.unlink()
+        # svg favicons are a thing but not that much popular. They will be converted to png
+        elif shortcut.icon_base64 and 'data:image/svg+xml;base64' in shortcut.icon_base64[:27]:
+            encoded = shortcut.icon_base64[shortcut.icon_base64.find(','):]
+            # 'PHN2Zy' is equivalent to '<svg
+            if 'PHN2Zy' in encoded[:7]:
+                data = base64.b64decode(encoded)
+
+                # svglib just accept svg files, so one is created on the icon dir
+                svg_path = icons_path / 'svg.svg'
+                with svg_path.open(mode='wb') as svg:
+                    svg.write(data)
+                drawing = svg2rlg(str(svg_path))
+
+                ico = renderPM.drawToPIL(drawing)
+                ico_path = icons_path / (str(uuid.uuid4()) + '.ico')
+                ico.save(ico_path)
+                ico_path = ico_path.resolve()
+                ico_path = ico_path.absolute()
+                svg_path.unlink()
+
+        elif shortcut.icon_base64:
+            print('Favicon for ' + shortcut.name + ' has an unknown file type!')
         s = creator.shortcut_creator(shortcut)
         attributes = parser.attribute_extractor(s[0][6:])
         attributes['NAME'] = shortcut.name

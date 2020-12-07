@@ -1,6 +1,11 @@
 # Bookmarks to Dir
 This script will convert a bookmarks html export from a browser to a directory structure and the way back.
 
+## Depedencies
+- [NetscapeBookmarksFileParser](https://github.com/FlyingWolFox/Netscape-Bookmarks-File-Parser)
+- PIL
+- SVGLIB
+
 ## How to use
 ```bash
 bookmarks_to_dir <file> <dir_destination>
