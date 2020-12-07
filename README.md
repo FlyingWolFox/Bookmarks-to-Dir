@@ -3,7 +3,7 @@ This script will convert a bookmarks html export from a browser to a directory s
 
 ## Depedencies
 - [NetscapeBookmarksFileParser](https://github.com/FlyingWolFox/Netscape-Bookmarks-File-Parser)
-- PIL
+- pillow (PIL fork)
 - SVGLIB
 
 ## How to use
